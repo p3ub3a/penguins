@@ -1,68 +1,82 @@
-$( document ).ready(function() {
-    var url="ws://localhost:8083/waddle/";
-    var user;
-    $.ajax({
-        async: false,
-        type: 'GET',
-        url: '/user',
-        success: function(data) {
-            user = data.toString()
-            url = url.concat(user);
-        }
-    });
-
-    var ws = new WebSocket(url);
-
-    ws.onopen = function(){
-        console.log("ws online");
-    }
-
-    ws.onmessage = function(event){
-        console.log(event);
-        var finalData = JSON.parse(event.data.replace(/\\/g, ""));
-        console.log(finalData.content);
-        switch(finalData.info){
-            case "connected":
-                console.log(user + " connected");
-                break;
-            case "disconnected":
-                console.log(user + " disconnected");
-                break;
-            case "spawnPengu":
-                msgContent = finalData.messageContent;
-                $("#container").prepend($('<img class="imgContainer" src="img/penguin' + msgContent.option + '.png" heightalt="penguin" style="left:' + msgContent.x + 'px; top:'+ msgContent.y + 'px;" >'));
-        }
-    }
-
-    ws.onclose = function(){
-        console.log("ws offline");
-    }
-
-    $( "#container" ).click(function(event) {
-        let option = $("#penguinOpts").val();
-        if(option != null){
-            var payload = {option : option, x: event.clientX, y: event.clientY};
-            console.log(JSON.stringify(payload));
-            ws.send(JSON.stringify(payload));
-            // $("#container").prepend($('<img class="imgContainer" src="img/penguin' + option + '.png" heightalt="penguin" style="left:' + event.clientX + 'px; top:'+ event.clientY + 'px;" >'));
-        }
-    }); 
-    
-    $('#penguinOpts').click(function(e){
+$(document).ready(function () {
+    $('#formExpanderBtn').click(function (e) {
+        $('#addPenguForm').slideToggle();
         e.stopPropagation();
     });
+
+    $('#penguNameOpts').click(function (e) {
+        if(e.target.className == "select"){
+            $.ajax({
+                type: 'GET',
+                url: '/api/penguins',
+                success: function (data) {
+                    $('.penguNameOpt').remove();
+                    $.each(data, function (i, item) {
+                        $('#penguNameOpts').append('<option class="penguNameOpt" value=' + item.id + '>' + item.name + '</option>');
+                    });
+                }
+            });
+        }
+        e.stopPropagation();
+    });
+
+    $('#penguInput').click(function(e){
+        e.stopPropagation();
+    });
+
+    $("#addBtn").click(function(e){
+        if($('input[name=penguRadio]:checked', '#addPenguForm').val()){
+            $("#penguOpts").css("border", "");
+            
+            if($('#penguInput').is(':valid') && $('#penguInput').val() != ""){
+                $("#penguInput").css("border", "");
+
+                $.ajax({
+                    type: "POST",
+                    url: '/api/pengu',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    data: JSON.stringify({ 
+                        "name": $('#penguInput').val(), 
+                        "option": $('input[name=penguRadio]:checked', '#addPenguForm').val() 
+                    }),
+                    success: function (data) {
+                        console.log(data.toString());
+                    },
+                    dataType: "json"
+                });
     
-    $('#clearBtn').click(function(e){
-        $('.imgContainer').remove();
+                $('#penguInput').val("");
+                unselectPengus();
+            }else{
+                $("#penguInput").css("border", "2px dashed crimson");
+            }
+        }else{
+            $("#penguOpts").css("border", "2px dashed crimson");
+        }
+        
         e.stopPropagation();
     });
 });
 
+function selectPengu(event) {
+    unselectPengus();
+    let selection;
+    if (event.target.className == "penguImgOpt") {
+        selection = event.target.attributes.heightalt.value;
+    } else {
+        selection = event.target.firstChild.attributes.heightalt.value;
+    }
 
+    selection = selection.slice(-1);
+    $("#hiddenPenguRadio" + selection).attr("checked", true);
+    $("#penguinLi" + selection).css("background-color", "black");
+    event.stopPropagation();
+}
 
-$.get('/api',  // url
-    function (data, textStatus, jqXHR) {  // success callback
-        $.each(data, function(i, item){
-            $('#penguinOpts').append('<option value=' + item.id + '>' + item.name + '</option>');
-        });
-});
+function unselectPengus(){
+    $(".hiddenPenguRadio").removeAttr("checked");
+    $(".penguLiOpt").css("background-color", "white");
+}

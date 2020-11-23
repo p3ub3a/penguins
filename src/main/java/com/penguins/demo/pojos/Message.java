@@ -1,4 +1,4 @@
-package com.penguins.demo;
+package com.penguins.demo.pojos;
 
 import javax.json.bind.annotation.JsonbProperty;
 
@@ -13,7 +13,7 @@ public class Message {
     private String info;
 
     @JsonbProperty
-    private MessageContent messageContent;
+    private Placement placement;
 
     public String getFrom(){
         return from;
@@ -32,22 +32,22 @@ public class Message {
     }
 
     public String getInfo(){
-        return to;
+        return info;
     }
 
     public void setInfo(String info){
         this.info = info;
     }
 
-    public MessageContent getMessageContent(){
-        return messageContent;
+    public Placement getPlacement(){
+        return placement;
     }
 
-    public void setMessageContent(MessageContent messageContent){
-        this.messageContent = messageContent;
+    public void setPlacement(Placement placement){
+        this.placement = placement;
     }
 
     public String toString(){
-        return "from: " + from + "; to: " + to + "; content: " + messageContent;
+        return "from: " + from + "; to: " + to + "; info: " + info + "; content: " + placement;
     }
 }

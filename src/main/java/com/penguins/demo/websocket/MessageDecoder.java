@@ -1,14 +1,21 @@
-package com.penguins.demo;
+package com.penguins.demo.websocket;
 
+import javax.inject.Inject;
 import javax.websocket.DecodeException;
 import javax.websocket.Decoder;
 import javax.websocket.EndpointConfig;
 
 import com.google.gson.Gson;
+import com.penguins.demo.pojos.Message;
+
+import org.eclipse.microprofile.context.ManagedExecutor;
 
 public class MessageDecoder implements Decoder.Text<Message> {
 
     private static Gson gson = new Gson();
+
+    @Inject
+    ManagedExecutor managedExecutor;
 
     @Override
     public void init(EndpointConfig config) {
@@ -24,19 +31,19 @@ public class MessageDecoder implements Decoder.Text<Message> {
 
     @Override
     public Message decode(String s) throws DecodeException {
-        // TODO Auto-generated method stub
-        Message message = new Message();
-        MessageContent messageContent = gson.fromJson(s, MessageContent.class);
-        message.setInfo("spawnPengu");
-        message.setMessageContent(messageContent);
-        return message;
+        try{
+            Message message = gson.fromJson(s, Message.class);
+            return message;
+        }catch( Exception e){
+            e.printStackTrace();
+        }
+        return new Message();
     }
 
     @Override
     public boolean willDecode(String s) {
         // TODO Auto-generated method stub
-        return s!=null;
+        return s != null;
     }
 
-    
 }

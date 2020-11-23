@@ -1,4 +1,4 @@
-package com.penguins.demo;
+package com.penguins.demo.api;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

@@ -1,12 +1,12 @@
-package com.penguins.demo;
+package com.penguins.demo.websocket;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
-
-import javax.websocket.EncodeException;
+import javax.inject.Inject;
+import javax.transaction.TransactionManager;
 import javax.websocket.OnClose;
 import javax.websocket.OnError;
 import javax.websocket.OnMessage;
@@ -14,9 +14,20 @@ import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
+import com.penguins.demo.pojos.Message;
+import com.penguins.demo.pojos.Penguin;
+import com.penguins.demo.pojos.Placement;
+
+import org.eclipse.microprofile.context.ManagedExecutor;
 
 @ServerEndpoint(value = "/waddle/{user}", decoders = MessageDecoder.class, encoders = MessageEncoder.class)
 public class PenguinHub {
+    @Inject
+    ManagedExecutor managedExecutor;
+
+    @Inject
+    TransactionManager transactionManager;
+
     private static Set<Session> sessions = new CopyOnWriteArraySet<>();
     private static Map<String, String> users = new HashMap<>();
 
@@ -34,10 +45,16 @@ public class PenguinHub {
 
     @OnMessage
     public void onMessage(Session session, Message message) throws IOException {
-        // Handle new messages
         message.setFrom(users.get(session.getId()));
-        // System.out.println(message.getContent());
-        broadcast(message);
+        managedExecutor.submit(() -> {
+            try{
+                transactionManager.begin();
+                parseMessage(message);
+                transactionManager.commit();
+            }catch(Exception e){
+                e.printStackTrace();
+            } 
+        });
     }
 
     @OnClose
@@ -55,20 +72,33 @@ public class PenguinHub {
         // Do error handling here
     }
 
+    private void parseMessage(Message message) {
+        try {
+            if(message.getInfo().equals("spawn-pengu")){
+                Placement placement = message.getPlacement();
+                placement.setPenguin(Penguin.findById((long) placement.getPenguin().id));
+                placement.persist();
+            }else{
+                Placement.deleteAll();
+            }
+            
+            broadcast(message);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private static void broadcast(Message message) {
-        System.out.println(sessions.size() + sessions.toString());
         sessions.forEach(s -> {
             try {
-                System.out.println("*sending " + s.getId() + "; isopen: " + s.isOpen() + "\n*message: " + message.toString());
-                if(s.isOpen()){
-                    System.out.println(s.getAsyncRemote() + "ceva");
+                System.out.println(
+                        "*****Sending msg, session: " + s.getId() + "; isopen: " + s.isOpen() + "\n*message: " + message.toString());
+                if (s.isOpen()) {
                     s.getAsyncRemote().sendObject(message);
-                    System.out.println("message sent");
                 }
-                    
-                }catch(IllegalArgumentException e){
-                    e.printStackTrace();
-                }
+            } catch (IllegalArgumentException e) {
+                e.printStackTrace();
+            }
         });
     }
 }
