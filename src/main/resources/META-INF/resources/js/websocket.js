@@ -1,5 +1,5 @@
 $(document).ready(function () {
-    var url = "ws://localhost:8083/waddle/";
+    var url = window.location.href.replace("http", "ws") + "waddle/";
     var user;
     $.ajax({
         async: false,
@@ -23,7 +23,7 @@ $(document).ready(function () {
             success: function (data) {
                 console.log(data);
                 $.each(data, function (i, placement) {
-                    $("#container").prepend($('<img class="imgContainer" src="img/penguin' + placement.penguin.option + '.png" heightalt="penguin" style="left:' + placement.x + 'px; top:' + placement.y + 'px;" >'));
+                    $("#container").prepend($('<img class="imgContainer" src="img/penguin' + placement.penguin.option + '.png" heightalt="penguin" style="left:' + (placement.x * $(window).width()) + 'px; top:' + (placement.y * $(window).height()) + 'px;" >'));
                 });
             }
         });
@@ -41,8 +41,8 @@ $(document).ready(function () {
                 break;
             case "spawn-pengu":
                 var msgContent = finalData.placement;
-                var xCoord = msgContent.x - parseInt($(".imgContainer").css("width")) / 2;
-                var yCoord = msgContent.y - parseInt($(".imgContainer").css("height")) / 2;
+                var xCoord = (msgContent.x * $(window).width()) - parseInt($(".imgContainer").css("width")) / 2;
+                var yCoord = (msgContent.y * $(window).height()) - parseInt($(".imgContainer").css("height")) / 2;
                 $("#container").prepend($('<img class="imgContainer" src="img/penguin' + msgContent.penguin.option + '.png" heightalt="penguin" style="left:' + xCoord + 'px; top:' + yCoord + 'px;" >'));
                 break;
             case "remove-placements":
@@ -57,9 +57,12 @@ $(document).ready(function () {
     }
 
     $("#container").click(function (event) {
+        console.log(event);
         let penguId = $("#penguNameOpts").val();
         if (penguId != null) {
-            let payload = { info: "spawn-pengu", placement: { x: event.clientX, y: event.clientY, penguin: {id: penguId} } };
+            let xPercent = event.clientX / $(window).width();
+            let yPercent = event.clientY / $(window).height();
+            let payload = { info: "spawn-pengu", placement: { x: xPercent, y: yPercent, penguin: {id: penguId} } };
             ws.send(JSON.stringify(payload));
         }
     });

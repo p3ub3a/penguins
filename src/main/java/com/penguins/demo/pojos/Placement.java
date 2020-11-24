@@ -11,29 +11,29 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
 public class Placement extends PanacheEntity{
 
     @JsonbProperty
-    private int x;
+    private double x;
 
     @JsonbProperty
-    private int y;
+    private double y;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonbProperty
     private Penguin penguin;
 
-    public int getX(){
+    public double getX(){
         return x;
     }
     
 
-    public void setX(int x){
+    public void setX(double x){
         this.x = x;
     }
 
-    public int getY(){
+    public double getY(){
         return y;
     }
 
-    public void setY(int y){
+    public void setY(double y){
         this.y = y;
     }
 
