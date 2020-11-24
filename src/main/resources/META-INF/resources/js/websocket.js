@@ -30,7 +30,7 @@ function setUpWebsocket(isNewClient){
             success: function (data) {
                 console.log(data);
                 $.each(data, function (i, placement) {
-                    $("#container").prepend($('<img class="imgContainer" src="img/penguin' + placement.penguin.option + '.png" heightalt="penguin" style="left:' + (placement.x * $(window).width()) + 'px; top:' + (placement.y * $(window).height()) + 'px;" >'));
+                    $("#container").prepend($('<img class="imgContainer" src="img/penguin' + placement.penguin.option + '.png" heightalt="penguin" style="left:' + (placement.x * $(window).width() - parseInt($(".imgContainer").css("width")) / 2) + 'px; top:' + (placement.y * $(window).height() - parseInt($(".imgContainer").css("height")) / 2) + 'px;" >'));
                 });
             }
         });
