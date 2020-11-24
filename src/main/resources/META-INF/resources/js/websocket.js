@@ -1,17 +1,24 @@
 $(document).ready(function () {
+    setUpWebsocket(true);
+});
+
+function setUpWebsocket(isNewClient){
     var url = window.location.href.replace("http", "ws") + "waddle/";
     var user;
-    $.ajax({
-        async: false,
-        type: 'GET',
-        url: '/api/user',
-        success: function (data) {
-            user = data.toString()
-            url = url.concat(user);
-        }
-    });
 
-    createFakeImgContainer();
+    if(isNewClient){
+        $.ajax({
+            async: false,
+            type: 'GET',
+            url: '/api/user',
+            success: function (data) {
+                user = data.toString()
+                url = url.concat(user);
+            }
+        });
+
+        createFakeImgContainer();
+    }
 
     var ws = new WebSocket(url);
 
@@ -54,6 +61,7 @@ $(document).ready(function () {
 
     ws.onclose = function () {
         console.log("ws client disconnected");
+        setTimeout(setUpWebsocket(false), 1000);
     }
 
     $("#container").click(function (event) {
@@ -72,7 +80,7 @@ $(document).ready(function () {
         ws.send(JSON.stringify(payload));
         e.stopPropagation();
     });
-});
+}
 
 function createFakeImgContainer() {
     $('body').prepend($('<div style="display:none;" class="imgContainer"></div>'));
