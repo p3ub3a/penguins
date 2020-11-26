@@ -1,10 +1,9 @@
 $(document).ready(function () {
-    setUpWebsocket(true);
+    setUpWebsocket(true, "");
 });
 
-function setUpWebsocket(isNewClient){
+function setUpWebsocket(isNewClient, user){
     var url = window.location.href.replace("http", "ws") + "waddle/";
-    var user;
 
     if(isNewClient){
         $.ajax({
@@ -24,16 +23,18 @@ function setUpWebsocket(isNewClient){
 
     ws.onopen = function () {
         console.log("ws client connected");
-        $.ajax({
-            type: 'GET',
-            url: '/api/placements',
-            success: function (data) {
-                console.log(data);
-                $.each(data, function (i, placement) {
-                    $("#container").prepend($('<img class="imgContainer" src="img/penguin' + placement.penguin.option + '.png" heightalt="penguin" style="left:' + (placement.x * $(window).width() - parseInt($(".imgContainer").css("width")) / 2) + 'px; top:' + (placement.y * $(window).height() - parseInt($(".imgContainer").css("height")) / 2) + 'px;" >'));
-                });
-            }
-        });
+        if(isNewClient){
+            $.ajax({
+                type: 'GET',
+                url: '/api/placements',
+                success: function (data) {
+                    console.log(data);
+                    $.each(data, function (i, placement) {
+                        $("#container").prepend($('<img class="imgContainer" src="img/penguin' + placement.penguin.option + '.png" heightalt="penguin" style="left:' + (placement.x * $(window).width() - parseInt($(".imgContainer").css("width")) / 2) + 'px; top:' + (placement.y * $(window).height() - parseInt($(".imgContainer").css("height")) / 2) + 'px;" >'));
+                    });
+                }
+            });
+        }
     }
 
     ws.onmessage = function (event) {
@@ -41,10 +42,10 @@ function setUpWebsocket(isNewClient){
         var finalData = JSON.parse(event.data.replace(/\\/g, ""));
         switch (finalData.info) {
             case "connected":
-                console.log(user + " connected");
+                console.log(finalData.from + " connected");
                 break;
             case "disconnected":
-                console.log(user + " disconnected");
+                console.log(finalData.from + " disconnected");
                 break;
             case "spawn-pengu":
                 var msgContent = finalData.placement;
@@ -61,7 +62,9 @@ function setUpWebsocket(isNewClient){
 
     ws.onclose = function () {
         console.log("ws client disconnected");
-        setTimeout(setUpWebsocket(false), 1000);
+        $("#container").off("click");
+        $("#clearScrBtn").off("click");
+        setTimeout(setUpWebsocket(false, user), 1000);
     }
 
     $("#container").click(function (event) {
